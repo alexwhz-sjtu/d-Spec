@@ -1,1 +1,1 @@
-# d-Spec: Faster Speculative Decoding via diffusion-based draft model
+# d-Spec: Faster Speculative Decoding via Diffusion-Based Draft Model
