@@ -20,6 +20,7 @@ from .diffu_drafter import DreamModel as Model1
 from .diffu_drafter import DreamPreTrainedModel
 from .d_config import DConfig
 from .generation_utils import DreamGenerationConfig
+from torch import cuda
 
 
 class DSPModel(nn.Module):
@@ -142,7 +143,7 @@ class DSPModel(nn.Module):
             top_p=0.0,
             top_k=0.0,
             max_new_tokens=512,
-            max_length=2048,
+            max_length=4096,
             log=False,
             is_llama3=False,
 
@@ -154,8 +155,8 @@ class DSPModel(nn.Module):
             logits_processor = prepare_logits_processor(temperature=temperature, top_p=top_p, top_k=top_k)
         else:
             logits_processor = None
-        # assert input_ids.shape[0] == 1, "Only support batch size 1 for now!!"
-        # Avoid modifying the input_ids in-place
+
+
 
         padding = (torch.zeros(1, 1, dtype=torch.long) - 1).to(input_ids.device)
         input_ids = input_ids.clone()
@@ -188,6 +189,13 @@ class DSPModel(nn.Module):
         for idx in range(max_length):
             draft_tokens = torch.tensor(draft_tokens, device = input_ids.device)
             draft_tokens = draft_tokens.unsqueeze(0)
+
+                
+            cuda.synchronize()
+            start_time = torch.cuda.Event(enable_timing=True)
+            end_time = torch.cuda.Event(enable_timing=True)
+            start_time.record()
+
             # Target model forward, get logits
             logits, hidden_state_new, outputs = tree_decoding(
                 self,
@@ -223,6 +231,11 @@ class DSPModel(nn.Module):
                 sample_p
             )
             # print(f"new token: {tokenizer.decode(new_token])}")
+
+            end_time.record()
+            end_time.synchronize()
+            elapsed_time = start_time.elapsed_time(end_time) / 1000  # seconds
+            print(f"*** target model time :{elapsed_time:.4f} s ***")
 
             if is_llama3:
                 if stop_token_id in input_ids[0, input_len:].tolist():

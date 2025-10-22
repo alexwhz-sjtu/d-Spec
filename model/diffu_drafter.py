@@ -104,7 +104,7 @@ def sample_candidates(
     top_p=None,
     top_k=None,
     return_entropy=False,
-    max_k=10
+    max_k=5
 ):
     """
     返回每个位置的候选 token 及其概率，并可选地返回 entropy
@@ -130,21 +130,18 @@ def sample_candidates(
         probs = F.softmax(logits, dim=-1)
 
         epsilon = 1e-10
-        log_probs = torch.log(probs + epsilon)
-        entropy = -torch.sum(probs * log_probs, dim=-1)  # 正的 entropy
-
+    
         # 获取 top-k 候选（最多 max_k 个）
         actual_k = min(max_k, probs.size(-1))
         top_probs_all, top_tokens_all = torch.topk(probs, k=actual_k, dim=-1)  # shape: [B*M, K]
 
         new_top_tokens = []
         new_top_probs = []
+        new_top_entropies = []  # 👈 新增：用于存储每个样本在 top-k 子集上的 entropy
 
         for i in range(top_tokens_all.size(0)):
             tokens = top_tokens_all[i]
             probs_ = top_probs_all[i]
-
-            # print(f"All tokens : {tokens}")
 
             # 分离 151643 和其他
             is_151643 = (tokens == 151643)
@@ -155,9 +152,8 @@ def sample_candidates(
             invalid_tokens = tokens[is_151643]
             invalid_probs = probs_[is_151643]
 
-            # 🔒 兜底：必须至少保留一个 token（即使是 151643）
+            # 🔒 兜底：必须至少保留一个 token
             if len(valid_tokens) == 0:
-                # 取原始最高概率的那个（哪怕它是 151643）
                 _, orig_indices = torch.topk(probs_, k=1)
                 fake_valid_tokens = tokens[orig_indices]
                 fake_valid_probs = probs_[orig_indices]
@@ -176,16 +172,26 @@ def sample_candidates(
             new_top_tokens.append(reordered_tokens)
             new_top_probs.append(reordered_probs)
 
-        # 💣 安全检查：确保列表不为空
+            non_zero_mask = reordered_probs > 0
+            reordered_probs = reordered_probs[non_zero_mask]
+
+            #  top-k 子集上的 entropy
+            epsilon = 1e-10
+            log_probs = torch.log(reordered_probs + epsilon)
+            local_entropy = -torch.sum(reordered_probs * log_probs, dim=-1)  # scalar
+            new_top_entropies.append(local_entropy)
+
+        # 💣 安全检查
         if len(new_top_tokens) == 0:
             raise ValueError("No candidates generated for any sequence in batch.")
 
-        # ✅ 此时保证 new_top_tokens 非空
-        top_tokens = torch.stack(new_top_tokens, dim=0)
-        top_probs = torch.stack(new_top_probs, dim=0)
+        # ✅ stack 所有结果
+        top_tokens = torch.stack(new_top_tokens, dim=0)      # [B, K]
+        top_probs = torch.stack(new_top_probs, dim=0)        # [B, K]
+        top_entropies = torch.stack(new_top_entropies, dim=0)  # [B]  ← 每个序列一个 entropy
 
         if return_entropy:
-            return top_tokens, top_probs, entropy
+            return top_tokens, top_probs, top_entropies   # ✅ 返回新 entropy
         else:
             return top_tokens, top_probs
         
@@ -1090,10 +1096,10 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
             )
 
             entropy_norm = (entropy - entropy.min()) / (entropy.max() - entropy.min() + 1e-8)
-            k_min, k_max = 1, 5
-            dynamic_part = (k_max - k_min) * entropy_norm * 2
-            dynamic_ks = k_min + dynamic_part
-            dynamic_ks = dynamic_ks.ceil().long().clamp(min=1, max=top_tokens.size(1)) 
+            k_min, k_max = 1, 4
+            dynamic_ks = (k_max - k_min) * entropy_norm
+            print(entropy_norm)
+            dynamic_ks = dynamic_ks.ceil().long().clamp(min=1, max=k_max) 
             candidates_list = []
             for j in range(top_tokens.size(0)):
                 k = dynamic_ks[j].item()
@@ -1112,7 +1118,7 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
         end_time.record()
         end_time.synchronize()
         elapsed_time = start_time.elapsed_time(end_time) / 1000  # seconds
-        print(f"*** draft speed ; {generate_length / elapsed_time:.4f} tokens/s ***")
+        print(f"*** draft time :{elapsed_time:.4f} s ***")
 
         # --------------------------- create tree candidate ----------------------------
         from collections import defaultdict

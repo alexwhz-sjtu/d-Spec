@@ -299,6 +299,7 @@ def tree_decoding(
         input_ids,
         retrieve_indices,
 ):
+
     position_ids = tree_position_ids + input_ids.shape[1]
     if position_ids is not None and position_ids.dim() == 1:
             position_ids = position_ids.unsqueeze(0)
