@@ -63,8 +63,13 @@ from transformers.utils import (
     logging,
 )
 from transformers import PretrainedConfig
-from .configuration_dream import DreamConfig
-from .generation_utils import DreamGenerationMixin, DreamGenerationConfig
+
+try:
+    from .d_config import DConfig
+    from .generation_utils import DreamGenerationMixin, DreamGenerationConfig
+except:
+    from d_config import DConfig
+    from generation_utils import DreamGenerationMixin, DreamGenerationConfig
 
 if is_flash_attn_2_available():
     from transformers.modeling_flash_attention_utils import _flash_attention_forward
@@ -76,6 +81,22 @@ logger = logging.get_logger(__name__)
 _CHECKPOINT_FOR_DOC = "Dream-7B"
 _CONFIG_FOR_DOC = "DreamConfig"
 
+
+def _expand_inputs_for_generation(
+        expand_size: int = 1,
+        input_ids: Optional[torch.LongTensor] = None,
+        attention_mask: Optional[torch.LongTensor] = None
+    ) -> Tuple[torch.LongTensor, Dict[str, Any]]:
+        """Expands tensors from [batch_size, ...] to [batch_size * expand_size, ...]"""
+        # Do not call torch.repeat_interleave if expand_size is 1 because it clones
+        # the input tensor and thus requires more memory although no change is applied
+        if expand_size == 1:
+            return input_ids, attention_mask
+        if input_ids is not None:
+            input_ids = input_ids.repeat_interleave(expand_size, dim=0)
+        if attention_mask is not None:
+            attention_mask = attention_mask.repeat_interleave(expand_size, dim=0)
+        return input_ids, attention_mask
 
 def sample_candidates(
     logits,
@@ -114,7 +135,54 @@ def sample_candidates(
 
         # 获取 top-k 候选（最多 max_k 个）
         actual_k = min(max_k, probs.size(-1))
-        top_probs, top_tokens = torch.topk(probs, k=actual_k, dim=-1)  # shape: [B*M, K]
+        top_probs_all, top_tokens_all = torch.topk(probs, k=actual_k, dim=-1)  # shape: [B*M, K]
+
+        new_top_tokens = []
+        new_top_probs = []
+
+        for i in range(top_tokens_all.size(0)):
+            tokens = top_tokens_all[i]
+            probs_ = top_probs_all[i]
+
+            # print(f"All tokens : {tokens}")
+
+            # 分离 151643 和其他
+            is_151643 = (tokens == 151643)
+            not_151643 = ~is_151643
+
+            valid_tokens = tokens[not_151643]
+            valid_probs = probs_[not_151643]
+            invalid_tokens = tokens[is_151643]
+            invalid_probs = probs_[is_151643]
+
+            # 🔒 兜底：必须至少保留一个 token（即使是 151643）
+            if len(valid_tokens) == 0:
+                # 取原始最高概率的那个（哪怕它是 151643）
+                _, orig_indices = torch.topk(probs_, k=1)
+                fake_valid_tokens = tokens[orig_indices]
+                fake_valid_probs = probs_[orig_indices]
+            else:
+                fake_valid_tokens = valid_tokens
+                fake_valid_probs = valid_probs
+
+            # 拼接：有效 + 无效
+            reordered_tokens = torch.cat([fake_valid_tokens, invalid_tokens], dim=0)
+            reordered_probs = torch.cat([fake_valid_probs, invalid_probs], dim=0)
+
+            # 截断回 actual_k
+            reordered_tokens = reordered_tokens[:actual_k]
+            reordered_probs = reordered_probs[:actual_k]
+
+            new_top_tokens.append(reordered_tokens)
+            new_top_probs.append(reordered_probs)
+
+        # 💣 安全检查：确保列表不为空
+        if len(new_top_tokens) == 0:
+            raise ValueError("No candidates generated for any sequence in batch.")
+
+        # ✅ 此时保证 new_top_tokens 非空
+        top_tokens = torch.stack(new_top_tokens, dim=0)
+        top_probs = torch.stack(new_top_probs, dim=0)
 
         if return_entropy:
             return top_tokens, top_probs, entropy
@@ -174,7 +242,7 @@ class DreamRotaryEmbedding(nn.Module):
         device=None,
         scaling_factor=1.0,
         rope_type="default",
-        config: Optional[DreamConfig] = None,
+        config: Optional[DConfig] = None,
     ):
         super().__init__()
         # TODO (joao): remove the `if` below, only used for BC
@@ -328,7 +396,7 @@ class DreamAttention(nn.Module):
     and "Generating Long Sequences with Sparse Transformers".
     """
 
-    def __init__(self, config: DreamConfig, layer_idx: Optional[int] = None):
+    def __init__(self, config: DConfig, layer_idx: Optional[int] = None):
         super().__init__()
         self.config = config
         self.layer_idx = layer_idx
@@ -526,7 +594,7 @@ class DreamSdpaAttention(DreamAttention):
 
 
 class DreamDecoderLayer(nn.Module):
-    def __init__(self, config: DreamConfig, layer_idx: int):
+    def __init__(self, config: DConfig, layer_idx: int):
         super().__init__()
         self.hidden_size = config.hidden_size
 
@@ -611,7 +679,7 @@ class DreamDecoderLayer(nn.Module):
         return outputs
 
 class DreamPreTrainedModel(PreTrainedModel):
-    config_class = DreamConfig
+    config_class = DConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
     _no_split_modules = ["DreamDecoderLayer"]
@@ -694,7 +762,7 @@ class DreamBaseModel(DreamPreTrainedModel):
         config: DreamConfig
     """
 
-    def __init__(self, config: DreamConfig):
+    def __init__(self, config: DConfig):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
@@ -828,6 +896,7 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
         self.model = DreamBaseModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, config.pad_token_id)
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -911,11 +980,17 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
         )
     
     @torch.no_grad()
-    def topK_genrate(self, hidden_states, input_ids, head, logits_processor, generation_config: DreamGenerationConfig,):
+    def topK_genrate(self, 
+                     hidden_states, 
+                     input_ids, 
+                     head, 
+                     logits_processor, 
+                     tokenizer,
+                     generation_config: DreamGenerationConfig,
+                     depth =8):
 
-        output_history = generation_config.output_history
-        return_dict_in_generate = generation_config.return_dict_in_generate
-        max_length = generation_config.max_length
+        output_history = None
+        generate_length = depth
         mask_token_id = generation_config.mask_token_id
         steps = generation_config.steps
         eps = generation_config.eps
@@ -927,21 +1002,19 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
 
 
         input_ids = input_ids.to(hidden_states.device)
-        total_tokens = self.total_tokens
-        depth = self.depth
-        top_k = self.top_k
+        depth = depth
+        top_k = depth
 
-        sample_token = input_ids[:, -1]
-
-        scores_list = []
-        parents_list = []
-        ss_token = []
 
         input_ids = input_ids[:, 1:]
         input_ids = input_ids.to(hidden_states.device)
 
-        len_posi = input_ids.shape[1]
-        self.reset()
+        attention_mask = None
+        input_ids, attention_mask = _expand_inputs_for_generation(
+            expand_size=generation_config.num_return_sequences,
+            input_ids=input_ids,
+            attention_mask=attention_mask 
+        )
 
         # # with Timer("draft many"):
         # if hasattr(self, "stable_kv") and self.stable_kv is not None:
@@ -950,20 +1023,17 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
         #                                        past_key_values=self.stable_kv, use_cache=True)
         # else:
 
-        histories = [] if (return_dict_in_generate and output_history) else None
-
-        generate_length = max_length - input_ids.shape[1]
         cuda.synchronize()
         start_time = torch.cuda.Event(enable_timing=True)
         end_time = torch.cuda.Event(enable_timing=True)
         start_time.record()
 
         # pad input_ids to max_length
-        x = F.pad(input_ids, (0, max_length - input_ids.shape[1]), value=mask_token_id)
+        x = F.pad(input_ids, (0, generate_length), value=mask_token_id)
 
         if attention_mask is not None and torch.any(attention_mask == 0.0):
             # we do not mask the [MASK] tokens so value = 1.0
-            attention_mask = F.pad(attention_mask, (0, max_length - attention_mask.shape[1]), value=1.0)
+            attention_mask = F.pad(attention_mask, (0, generate_length), value=1.0)
             tok_idx = attention_mask.long().cumsum(-1) - 1
             tok_idx.masked_fill_(attention_mask == 0, 1)
             # attention_mask is of shape [B, N]
@@ -1021,11 +1091,13 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
 
             entropy_norm = (entropy - entropy.min()) / (entropy.max() - entropy.min() + 1e-8)
             k_min, k_max = 1, 5
-            dynamic_ks = k_min + (k_max - k_min) * entropy_norm  # [num_masked]
+            dynamic_part = (k_max - k_min) * entropy_norm * 2
+            dynamic_ks = k_min + dynamic_part
             dynamic_ks = dynamic_ks.ceil().long().clamp(min=1, max=top_tokens.size(1)) 
             candidates_list = []
             for j in range(top_tokens.size(0)):
                 k = dynamic_ks[j].item()
+                # print(f"position:{j}, token: {tokenizer.decode(top_tokens[j, :k])}")
                 candidates_list.append({
                     'tokens': top_tokens[j, :k],      # 前 k 个候选
                     'probs': top_probs[j, :k],        # 对应概率
@@ -1036,12 +1108,9 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
             # this allows user-defined token control of the intermediate steps
             # x = generation_tokens_hook_func(i, x, logits)
 
-            if histories is not None:
-                histories.append(x.clone())
 
         end_time.record()
         end_time.synchronize()
-        generate_length = max_length - input_ids.shape[1]
         elapsed_time = start_time.elapsed_time(end_time) / 1000  # seconds
         print(f"*** draft speed ; {generate_length / elapsed_time:.4f} tokens/s ***")
 

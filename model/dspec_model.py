@@ -17,7 +17,9 @@ from .utils import *
 from .kv_cache import initialize_past_key_values
 
 from .diffu_drafter import DreamModel as Model1
+from .diffu_drafter import DreamPreTrainedModel
 from .d_config import DConfig
+from .generation_utils import DreamGenerationConfig
 
 
 class DSPModel(nn.Module):
@@ -27,12 +29,11 @@ class DSPModel(nn.Module):
             use_eagle3,
             base_model,
             base_model_name_or_path,
-            ea_model_path,
+            d_model_path,
             total_token,
             depth,
             top_k,
             threshold,
-            d_model_state_dict,
     ):
 
         super().__init__()
@@ -43,33 +44,16 @@ class DSPModel(nn.Module):
         self.base_model_name_or_path = base_model_name_or_path
         self.tokenizer = AutoTokenizer.from_pretrained(self.base_model_name_or_path, use_fast=False)
         self.use_eagle3 = use_eagle3
-        config = DConfig.from_pretrained(ea_model_path)
-        with open(ea_model_path, "r") as f:
-            con = json.loads(f.read())
-        try:
-            bias = con["bias"]
-        except:
-            bias = True
        
-        self.d_model = Model1(config, bias=bias, total_tokens=total_token, depth=depth, top_k=top_k,
-                                  threshold=threshold, path=base_model_name_or_path,load_emb=True)
-
-        low_memory = False
-
-        device = base_model.model.layers[-1].self_attn.q_proj.weight.device
-        if device != base_model.lm_head.weight.device:
-            self.d_model.diff_device = True
-            if not low_memory:
-                self.d_model.headweight = base_model.lm_head.weight.clone().to(device)
-            else:
-                self.d_model.layer_device = device
-
-        else:
-            self.d_model.diff_device = False
-
-        load_=self.d_model.load_state_dict(d_model_state_dict, strict=False)
-        self.d_model.to(self.base_model.dtype).to(device)
-        self.d_model.init_tree()
+        self.total_tokens = total_token
+        self.depth = depth
+        self.top_k = top_k
+        self.threshold = threshold
+        self.d_config = DConfig.from_pretrained(d_model_path)
+        self.d_generation_config = DreamGenerationConfig.from_model_config(self.d_config)
+       
+        self.d_model = Model1.from_pretrained(d_model_path, torch_dtype=self.base_model.dtype).to(self.base_model.device)
+        
 
     def get_tokenizer(self):
         """Get the tokenizer of the base model.
@@ -107,57 +91,19 @@ class DSPModel(nn.Module):
                 base_model_path, **kwargs
             )
 
-        configpath = os.path.join(ea_model_path, "config.json")
-        if not os.path.exists(configpath):
-            configpath = hf_hub_download(ea_model_path, "config.json")
 
-        try:
-            load_model_path = os.path.join(ea_model_path, "pytorch_model.bin")
-            if not os.path.exists(load_model_path):
-                load_model_path = hf_hub_download(ea_model_path, "pytorch_model.bin")
-            d_model_state_dict = torch.load(load_model_path,
-                                             map_location=base_model.device)
-        except:
-            from safetensors.torch import load_file
-            load_model_path = os.path.join(ea_model_path, "model.safetensors")
-            if not os.path.exists(load_model_path):
-                load_model_path = hf_hub_download(ea_model_path, "model.safetensors")
-            d_model_state_dict = load_file(load_model_path)
-        
+
         # initialize model
         model = cls(
             use_eagle3,
             base_model,
             base_model_path,
-            configpath,
+            ea_model_path,
             total_token,
             depth,
             top_k,
-            threshold,
-            d_model_state_dict
+            threshold
         )
-
-        if total_token == -1:
-            device = model.base_model.model.layers[0].self_attn.q_proj.weight.device
-            cans = [40, 48, 50, 56, 60]
-            x = [1, 1.05, 1.07, 1.1, 1.13]
-            times = []
-
-            for i in range(len(cans)):
-                length = cans[i]
-                input_ids = torch.randint(0, model.config.vocab_size - 200, (1, length)).to(device)
-                torch.cuda.synchronize()
-                start_time = time.time()
-                for _ in range(20):
-                    torch.cuda.synchronize()
-                    with torch.no_grad():
-                        outputs = model.base_model(input_ids)
-                    torch.cuda.synchronize()
-                torch.cuda.synchronize()
-                end_time = time.time()
-                times.append((end_time - start_time) / x[i])
-            total_token = cans[times.index(min(times))]
-            model.d_model.total_tokens = total_token - 1
 
         return model
 
@@ -188,7 +134,7 @@ class DSPModel(nn.Module):
             return outputs, hidden_states
 
     @torch.no_grad()
-    # generate by the complete draft&base model
+    # generate by the complete draft&base model (d-Spec model)
     def dsp_generate(
             self,
             input_ids,
@@ -204,8 +150,6 @@ class DSPModel(nn.Module):
         
         if is_llama3:
             stop_token_id = self.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-
-
         if temperature > 1e-5:
             logits_processor = prepare_logits_processor(temperature=temperature, top_p=top_p, top_k=top_k)
         else:
@@ -215,8 +159,6 @@ class DSPModel(nn.Module):
 
         padding = (torch.zeros(1, 1, dtype=torch.long) - 1).to(input_ids.device)
         input_ids = input_ids.clone()
-
-        self.d_model.reset_kv()
 
         # Initialize the past key and value states
         if hasattr(self, "past_key_values"):
@@ -236,18 +178,16 @@ class DSPModel(nn.Module):
             self.current_length_data = current_length_data
 
         input_len = input_ids.shape[1]
-        reset_tree_mode(self)
+
         # prefill
         draft_tokens, retrieve_indices, tree_mask, tree_position_ids, logits, hidden_state, sample_token = initialize_tree(
             input_ids, self, past_key_values, logits_processor
         )
         new_token = 0
-        max_length = max_length - self.d_model.total_tokens - 10
+        max_length = max_length - self.total_tokens - 10
         for idx in range(max_length):
-            # with Timer("all"):
-            self.base_model.model.tree_mask = tree_mask
-
-            draft_tokens = draft_tokens.to(input_ids.device)
+            draft_tokens = torch.tensor(draft_tokens, device = input_ids.device)
+            draft_tokens = draft_tokens.unsqueeze(0)
             # Target model forward, get logits
             logits, hidden_state_new, outputs = tree_decoding(
                 self,
@@ -265,9 +205,10 @@ class DSPModel(nn.Module):
             best_candidate, accept_length, sample_p = evaluate_posterior(
                 logits, candidates, logits_processor
             )
-            # print(accept_length)
+            print(accept_length)
             # Adjusting the input sequence, draft model forward
-            input_ids, draft_tokens, retrieve_indices, tree_mask, tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
+            input_ids, draft_tokens, retrieve_indices, tree_mask, \
+                tree_position_ids, new_token, hidden_state, sample_token = update_inference_inputs(
                 input_ids,
                 candidates,
                 best_candidate,
@@ -281,6 +222,7 @@ class DSPModel(nn.Module):
                 hidden_state_new,
                 sample_p
             )
+            # print(f"new token: {tokenizer.decode(new_token])}")
 
             if is_llama3:
                 if stop_token_id in input_ids[0, input_len:].tolist():
@@ -343,7 +285,7 @@ class DSPModel(nn.Module):
             self.current_length_data = current_length_data
 
         input_len = input_ids.shape[1]
-        reset_tree_mode(self)
+
         outputs = self.base_model(input_ids, past_key_values=past_key_values, use_cache=True)
         new_token = 0
         max_length = max_length - self.d_model.total_tokens - 10
