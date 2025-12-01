@@ -1147,7 +1147,7 @@ class DreamModel(DreamGenerationMixin, DreamPreTrainedModel):
             candidates_list = []
             for j in range(top_tokens.size(0)):
                 k = dynamic_ks[j].item()
-                # print(f"position:{j}, token: {tokenizer.decode(top_tokens[j, :k])}")
+                print(f"position:{j}, token: {tokenizer.decode(top_tokens[j, :k])}")
                 candidates_list.append({
                     'tokens': top_tokens[j, :k],      # 前 k 个候选
                     'probs': top_probs[j, :k],        # 对应概率

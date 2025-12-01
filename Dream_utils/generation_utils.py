@@ -465,7 +465,7 @@ class DreamGenerationMixin:
         end_time.synchronize()
         generate_length = max_length - input_ids.shape[1]
         elapsed_time = start_time.elapsed_time(end_time) / 1000  # seconds
-        print(f"*** speed ; {generate_length / elapsed_time:.4f} tokens/s ***")
+        -(f"*** speed ; {generate_length / elapsed_time:.4f} tokens/s ***")
         
         if return_dict_in_generate:
             return DreamModelOutput(

@@ -1,400 +1,106 @@
-*** draft speed ; 329.8057 tokens/s ***
-0
-*** draft speed ; 332.1407 tokens/s ***
-2
-*** draft speed ; 335.7341 tokens/s ***
-0
-*** draft speed ; 328.8102 tokens/s ***
-0
-*** draft speed ; 304.6633 tokens/s ***
-0
-*** draft speed ; 340.8637 tokens/s ***
-4
-*** draft speed ; 341.0962 tokens/s ***
-2
-*** draft speed ; 339.5567 tokens/s ***
-4
-*** draft speed ; 292.7263 tokens/s ***
-1
-*** draft speed ; 335.8035 tokens/s ***
-1
-*** draft speed ; 340.5605 tokens/s ***
-1
-*** draft speed ; 334.9195 tokens/s ***
-0
-*** draft speed ; 342.2028 tokens/s ***
-4
-*** draft speed ; 300.9579 tokens/s ***
-1
-*** draft speed ; 339.4779 tokens/s ***
-0
-*** draft speed ; 339.7459 tokens/s ***
-3
-*** draft speed ; 340.1777 tokens/s ***
-0
-*** draft speed ; 344.0773 tokens/s ***
-2
-*** draft speed ; 340.6598 tokens/s ***
-0
-*** draft speed ; 343.2331 tokens/s ***
-3
-*** draft speed ; 339.7215 tokens/s ***
-2
-*** draft speed ; 334.8235 tokens/s ***
-3
-*** draft speed ; 316.1891 tokens/s ***
-3
-*** draft speed ; 320.7402 tokens/s ***
-0
-*** draft speed ; 332.7672 tokens/s ***
-2
-*** draft speed ; 332.4946 tokens/s ***
-0
-*** draft speed ; 330.0221 tokens/s ***
-2
-*** draft speed ; 305.8228 tokens/s ***
-4
-*** draft speed ; 325.2092 tokens/s ***
-1
-*** draft speed ; 324.3165 tokens/s ***
-4
-*** draft speed ; 303.9314 tokens/s ***
-4
-*** draft speed ; 297.0102 tokens/s ***
-5
-*** draft speed ; 316.4229 tokens/s ***
-1
-*** draft speed ; 315.5856 tokens/s ***
-0
-*** draft speed ; 317.8074 tokens/s ***
-1
-*** draft speed ; 317.7589 tokens/s ***
-1
-*** draft speed ; 313.6869 tokens/s ***
-4
-*** draft speed ; 314.9781 tokens/s ***
-0
-*** draft speed ; 314.8888 tokens/s ***
-1
-*** draft speed ; 315.8576 tokens/s ***
-0
-*** draft speed ; 316.4016 tokens/s ***
-2
-*** draft speed ; 311.2104 tokens/s ***
-1
-*** draft speed ; 233.9663 tokens/s ***
-1
-*** draft speed ; 278.4200 tokens/s ***
-7
-*** draft speed ; 275.4411 tokens/s ***
-3
-*** draft speed ; 273.5798 tokens/s ***
-1
-*** draft speed ; 273.7012 tokens/s ***
-3
-*** draft speed ; 272.5726 tokens/s ***
-2
-*** draft speed ; 271.2706 tokens/s ***
-4
-*** draft speed ; 269.6837 tokens/s ***
-4
-*** draft speed ; 268.9612 tokens/s ***
-0
-*** draft speed ; 269.0660 tokens/s ***
-1
-*** draft speed ; 270.3138 tokens/s ***
-1
-*** draft speed ; 269.1810 tokens/s ***
-1
-*** draft speed ; 268.9604 tokens/s ***
-5
-*** draft speed ; 268.6202 tokens/s ***
-0
-*** draft speed ; 269.0872 tokens/s ***
-5
-*** draft speed ; 275.6571 tokens/s ***
-1
-*** draft speed ; 276.9439 tokens/s ***
-2
-*** draft speed ; 276.5655 tokens/s ***
-2
-*** draft speed ; 274.6227 tokens/s ***
-1
-*** draft speed ; 276.8249 tokens/s ***
-1
-*** draft speed ; 282.4112 tokens/s ***
-1
-*** draft speed ; 252.3868 tokens/s ***
-1
-*** draft speed ; 280.6390 tokens/s ***
-2
-*** draft speed ; 281.2582 tokens/s ***
-2
-*** draft speed ; 279.4058 tokens/s ***
-0
-*** draft speed ; 273.1330 tokens/s ***
-2
-*** draft speed ; 274.2801 tokens/s ***
-2
-*** draft speed ; 273.8721 tokens/s ***
-1
-*** draft speed ; 273.1742 tokens/s ***
-1
-*** draft speed ; 272.3774 tokens/s ***
-3
-*** draft speed ; 269.9536 tokens/s ***
-1
-*** draft speed ; 272.4267 tokens/s ***
-0
-*** draft speed ; 271.2097 tokens/s ***
-2
-*** draft speed ; 268.8484 tokens/s ***
-1
-*** draft speed ; 272.0339 tokens/s ***
-1
-*** draft speed ; 269.5668 tokens/s ***
-1
-*** draft speed ; 270.4018 tokens/s ***
-1
-*** draft speed ; 270.3284 tokens/s ***
-0
-*** draft speed ; 271.1600 tokens/s ***
-2
-*** draft speed ; 270.2104 tokens/s ***
-0
-*** draft speed ; 270.4045 tokens/s ***
-2
-*** draft speed ; 270.6761 tokens/s ***
-0
-*** draft speed ; 273.6065 tokens/s ***
-0
-*** draft speed ; 277.4836 tokens/s ***
-3
-*** draft speed ; 275.7644 tokens/s ***
-2
-*** draft speed ; 273.9003 tokens/s ***
-7
-*** draft speed ; 222.6253 tokens/s ***
-5
-*** draft speed ; 223.7827 tokens/s ***
-1
-*** draft speed ; 223.2203 tokens/s ***
-1
-*** draft speed ; 222.4268 tokens/s ***
-0
-*** draft speed ; 222.0373 tokens/s ***
-2
-*** draft speed ; 222.8110 tokens/s ***
-0
-*** draft speed ; 225.7271 tokens/s ***
-3
-*** draft speed ; 222.5958 tokens/s ***
-0
-*** draft speed ; 224.8705 tokens/s ***
-7
-*** draft speed ; 224.9458 tokens/s ***
-1
-*** draft speed ; 224.2969 tokens/s ***
-2
-*** draft speed ; 223.7060 tokens/s ***
-2
-*** draft speed ; 223.4317 tokens/s ***
-2
-*** draft speed ; 223.6504 tokens/s ***
-1
-*** draft speed ; 223.2902 tokens/s ***
-1
-*** draft speed ; 223.1332 tokens/s ***
-3
-*** draft speed ; 222.3289 tokens/s ***
-2
-*** draft speed ; 221.9563 tokens/s ***
-0
-*** draft speed ; 221.2219 tokens/s ***
-2
-*** draft speed ; 220.6674 tokens/s ***
-4
-*** draft speed ; 221.7525 tokens/s ***
-2
-*** draft speed ; 221.6491 tokens/s ***
-0
-*** draft speed ; 223.3285 tokens/s ***
-0
-*** draft speed ; 223.7705 tokens/s ***
-0
-*** draft speed ; 224.3577 tokens/s ***
-1
-*** draft speed ; 223.2669 tokens/s ***
-1
-*** draft speed ; 222.6600 tokens/s ***
-0
-*** draft speed ; 222.9895 tokens/s ***
-2
-*** draft speed ; 221.8324 tokens/s ***
-2
-*** draft speed ; 222.4274 tokens/s ***
-1
-*** draft speed ; 222.5651 tokens/s ***
-1
-*** draft speed ; 222.9285 tokens/s ***
-2
-*** draft speed ; 222.2011 tokens/s ***
-1
-*** draft speed ; 221.8905 tokens/s ***
-4
-*** draft speed ; 219.4451 tokens/s ***
-2
-*** draft speed ; 219.6522 tokens/s ***
-0
-*** draft speed ; 219.2963 tokens/s ***
-0
-*** draft speed ; 220.0518 tokens/s ***
-0
-*** draft speed ; 220.9859 tokens/s ***
-0
-*** draft speed ; 215.6699 tokens/s ***
-0
-*** draft speed ; 221.0619 tokens/s ***
-0
-*** draft speed ; 220.7814 tokens/s ***
-0
-*** draft speed ; 219.7796 tokens/s ***
-0
-*** draft speed ; 220.0559 tokens/s ***
-0
-*** draft speed ; 220.7161 tokens/s ***
-0
-*** draft speed ; 219.6557 tokens/s ***
-0
-*** draft speed ; 220.2263 tokens/s ***
-0
-*** draft speed ; 220.1286 tokens/s ***
-2
-*** draft speed ; 218.8038 tokens/s ***
-3
-*** draft speed ; 218.6129 tokens/s ***
-1
-*** draft speed ; 217.9629 tokens/s ***
-0
-*** draft speed ; 217.9629 tokens/s ***
-0
-*** draft speed ; 218.2899 tokens/s ***
-0
-*** draft speed ; 218.0295 tokens/s ***
-0
-*** draft speed ; 217.7082 tokens/s ***
-0
-*** draft speed ; 216.7623 tokens/s ***
-1
-*** draft speed ; 219.2752 tokens/s ***
-0
-*** draft speed ; 217.7264 tokens/s ***
-1
-*** draft speed ; 219.1043 tokens/s ***
-7
-*** draft speed ; 181.3648 tokens/s ***
-0
-*** draft speed ; 184.3510 tokens/s ***
-0
-*** draft speed ; 184.2518 tokens/s ***
-3
-*** draft speed ; 183.9740 tokens/s ***
-1
-*** draft speed ; 182.4224 tokens/s ***
-1
-*** draft speed ; 184.4365 tokens/s ***
-2
-*** draft speed ; 182.4390 tokens/s ***
-1
-*** draft speed ; 182.8234 tokens/s ***
-1
-*** draft speed ; 183.3248 tokens/s ***
-1
-*** draft speed ; 182.7692 tokens/s ***
-2
-*** draft speed ; 181.3992 tokens/s ***
-1
-*** draft speed ; 181.3571 tokens/s ***
-0
-*** draft speed ; 187.3497 tokens/s ***
-0
-*** draft speed ; 187.4350 tokens/s ***
-2
-*** draft speed ; 186.7522 tokens/s ***
-5
-*** draft speed ; 186.7913 tokens/s ***
-4
-*** draft speed ; 185.2266 tokens/s ***
-3
-*** draft speed ; 185.4930 tokens/s ***
-5
-*** draft speed ; 185.6131 tokens/s ***
-1
-*** draft speed ; 184.0568 tokens/s ***
-1
-*** draft speed ; 184.7944 tokens/s ***
-2
-*** draft speed ; 185.6195 tokens/s ***
-1
-*** draft speed ; 178.7617 tokens/s ***
-0
-*** draft speed ; 179.1242 tokens/s ***
-0
-*** draft speed ; 178.1596 tokens/s ***
-0
-*** draft speed ; 179.1959 tokens/s ***
-0
-*** draft speed ; 178.3902 tokens/s ***
-5
-*** draft speed ; 177.3989 tokens/s ***
-2
-*** draft speed ; 176.5837 tokens/s ***
-6
-*** draft speed ; 177.3163 tokens/s ***
-0
-*** draft speed ; 176.1288 tokens/s ***
-2
-*** draft speed ; 177.2747 tokens/s ***
-4
-*** draft speed ; 176.9947 tokens/s ***
-3
-*** draft speed ; 176.3438 tokens/s ***
-0
-*** draft speed ; 174.6225 tokens/s ***
-3
-*** draft speed ; 175.6715 tokens/s ***
-4
-*** draft speed ; 176.2336 tokens/s ***
-0
-*** draft speed ; 176.6377 tokens/s ***
-3
-*** draft speed ; 173.0025 tokens/s ***
-0
-*** draft speed ; 173.1395 tokens/s ***
-2
-*** draft speed ; 172.0115 tokens/s ***
-5
-*** draft speed ; 172.3122 tokens/s ***
-0
-*** draft speed ; 171.5326 tokens/s ***
-0
-*** draft speed ; 171.8625 tokens/s ***
-1
-*** draft speed ; 170.8203 tokens/s ***
-1
-*** draft speed ; 147.1543 tokens/s ***
-1
-*** draft speed ; 150.8247 tokens/s ***
-1
-*** draft speed ; 150.8468 tokens/s ***
-0
-*** draft speed ; 150.1497 tokens/s ***
-1
-*** draft speed ; 147.1044 tokens/s ***
-0
-*** draft speed ; 149.5502 tokens/s ***
-0
-*** draft speed ; 150.5492 tokens/s ***
-4
-*** draft speed ; 150.4586 tokens/s ***
-2
+accept_length:0
+accept_length:0
+accept_length:1
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:2
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:1
+accept_length:1
+accept_length:1
+accept_length:4
+accept_length:1
+accept_length:4
+accept_length:4
+accept_length:1
+accept_length:3
+accept_length:3
+accept_length:0
+accept_length:3
+accept_length:0
+accept_length:1
+accept_length:1
+accept_length:2
+accept_length:2
+accept_length:0
+accept_length:1
+accept_length:3
+accept_length:0
+accept_length:1
+accept_length:0
+accept_length:4
+accept_length:2
+accept_length:1
+accept_length:1
+accept_length:0
+accept_length:2
+accept_length:0
+accept_length:1
+accept_length:0
+accept_length:2
+accept_length:1
+accept_length:4
+accept_length:0
+accept_length:1
+accept_length:3
+accept_length:0
+accept_length:1
+accept_length:4
+accept_length:3
+accept_length:4
+accept_length:1
+accept_length:5
+accept_length:4
+accept_length:2
+accept_length:3
+accept_length:0
+accept_length:4
+accept_length:1
+accept_length:1
+accept_length:3
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:4
+accept_length:1
+accept_length:1
+accept_length:3
+accept_length:6
+accept_length:5
+accept_length:0
+accept_length:0
+accept_length:1
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:1
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:2
+accept_length:1
+accept_length:0
+accept_length:2
+accept_length:0
+accept_length:0
+accept_length:0
+accept_length:4
+accept_length:2
+accept_length:2
+accept_length:1
+accept_length:1
+accept_length:0
+accept_length:2
+accept_length:2
+accept_length:1
+accept_length:1
+accept_length:0
+accept_length:0
+accept_length:4
+accept_length:6
+accept_length:1

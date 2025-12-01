@@ -66,6 +66,65 @@ class KVCache:
         return torch.narrow(self.data, 2, 0, self.current_length)
 
 
+
+def deep_copy_past_key_values(past_key_values, past_key_values_data_list, current_length_data):
+    """
+    Create a fully isolated copy of past_key_values, including:
+      - New storage tensors (per device)
+      - New current_length_data (on CPU)
+      - New KVCache instances pointing to new storage
+    This ensures NO shared state between original and copy.
+    """
+    config = current_length_data.shape[0] // 2  # num_hidden_layers * 2 / 2
+    batch_size = past_key_values_data_list[0].shape[1]
+    num_kv_heads = past_key_values_data_list[0].shape[2]
+    head_dim = past_key_values_data_list[0].shape[-1]
+    
+    # Step 1: Allocate new data tensors (one per device)
+    new_past_key_values_data_list = []
+    for orig_tensor in past_key_values_data_list:
+        new_tensor = torch.zeros_like(orig_tensor)  # same shape, device, dtype
+        new_past_key_values_data_list.append(new_tensor)
+
+    # Step 2: Copy data from old to new (optional: if you want to inherit cached values)
+    for i, orig_tensor in enumerate(past_key_values_data_list):
+        new_past_key_values_data_list[i].copy_(orig_tensor)
+
+    # Step 3: Allocate new length tracker (independent!)
+    new_current_length_data = current_length_data.clone()  # or torch.zeros_like(current_length_data)
+
+    # Step 4: Rebuild past_key_values with new caches
+    devices = [t.device for t in past_key_values_data_list]
+    start_device_idx = devices[0].index if hasattr(devices[0], 'index') else 0
+    temp_past_key_values = []
+
+    bias = 0
+    current_device_idx = start_device_idx
+    for i in range(len(past_key_values)):
+        device_idx = devices[i] if isinstance(devices[i], int) else devices[i].index
+        if device_idx != current_device_idx:
+            bias = 0
+            current_device_idx = device_idx
+
+        try:
+            temp_past_key_values.append([
+                KVCache(
+                    new_past_key_values_data_list[device_idx - start_device_idx][2 * bias + j],
+                    new_current_length_data[i * 2 + j]
+                ) for j in range(2)
+            ])
+        except IndexError:
+            # fallback to first device
+            temp_past_key_values.append([
+                KVCache(
+                    new_past_key_values_data_list[0][2 * bias + j],
+                    new_current_length_data[i * 2 + j]
+                ) for j in range(2)
+            ])
+        bias += 1
+
+    return temp_past_key_values, new_past_key_values_data_list, new_current_length_data
+
 def initialize_past_key_values(model,max_length=2200):
     """
     Initialize past key and value states for a given transformer model.
